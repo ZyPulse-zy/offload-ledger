@@ -1,0 +1,16 @@
+name: Lua policy tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  lua:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        lua: ['5.1', '5.2', '5.3', '5.4']
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y lua${{ matrix.lua }} lua-cjson
+      - run: make LUA=lua${{ matrix.lua }} test example
+      - if: matrix.lua != '5.2'
+        run: make LUA=lua${{ matrix.lua }} test-json
