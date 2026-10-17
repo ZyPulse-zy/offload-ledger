@@ -24,3 +24,9 @@ snapshot/action-outbox persistence remain explicit adapter obligations.
 
 The original Athena project and deployed router are read-only. Tests operate
 on synthetic opaque identities and an asynchronous in-memory backend only.
+
+Local real-kernel pipeline: **164 checks passed** across two dummy WANs. Exact
+CAKE budgets gated candidate admission; actual flower rules were created and
+removed through fenced-run, with delayed absence, full controller restart from
+a durable JSON snapshot/outbox, stale receipts and a partial-write timeout.
+The unrelated rule and static CAKE roots remained unchanged; all rules skip_hw.

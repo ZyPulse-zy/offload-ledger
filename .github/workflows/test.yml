@@ -14,3 +14,27 @@ jobs:
       - run: make LUA=lua${{ matrix.lua }} test example
       - if: matrix.lua != '5.2'
         run: make LUA=lua${{ matrix.lua }} test-json
+
+  kernel:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ledger
+      - uses: actions/checkout@v4
+        with:
+          repository: ZyPulse-zy/fenced-run
+          ref: 8cea5cd1a05898cd8131b9633af296385b4323fb
+          path: fenced
+      - uses: actions/checkout@v4
+        with:
+          repository: ZyPulse-zy/cake-snapshot
+          ref: a2bdad1296f217542b99aa12fa5e4524e0c051ed
+          path: cake
+      - name: Install test dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y lua5.1 lua-cjson iproute2
+      - run: make -C fenced && make -C cake
+      - name: Load test modules
+        run: sudo modprobe dummy && sudo modprobe sch_cake && sudo modprobe cls_flower && sudo modprobe act_gact
+      - name: Test real kernel pipeline in private network namespace
+        run: sudo env OFFLOAD_LAB_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 ledger/tests/kernel/test_pipeline.py "$PWD/fenced/fenced-run" "$PWD/cake/build/cake-snapshot" /usr/bin/lua5.1

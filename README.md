@@ -128,3 +128,8 @@ replacement before confirmed absence. See [VALIDATION.md](VALIDATION.md).
 They are state-machine evidence, not proof of NSS firmware behavior, target
 hardware compatibility, network performance or game latency. No original router
 or Athena deployment is modified by this project.
+
+A [real-kernel pipeline test](tests/kernel/README.md) composes this module with
+pinned cake-snapshot and fenced-run builds. It validates two-WAN budget input,
+actual flower-rule readback and durable outbox recovery inside a private network
+namespace. These are software rules with skip_hw, not an NSS backend.
