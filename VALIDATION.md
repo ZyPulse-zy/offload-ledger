@@ -22,11 +22,19 @@ router integration, deployed writer, conntrack event source, measured network
 benefit or game-performance validation. Receipt correctness and durable
 snapshot/action-outbox persistence remain explicit adapter obligations.
 
-The original Athena project and deployed router are read-only. Tests operate
-on synthetic opaque identities and an asynchronous in-memory backend only.
+The original Athena project and deployed router are read-only. Policy tests use synthetic opaque identities and an asynchronous in-memory
+backend. The separate controlled kernel tests below use private namespaces.
 
 Local real-kernel pipeline: **164 checks passed** across two dummy WANs. Exact
 CAKE budgets gated candidate admission; actual flower rules were created and
 removed through fenced-run, with delayed absence, full controller restart from
 a durable JSON snapshot/outbox, stale receipts and a partial-write timeout.
 The unrelated rule and static CAKE roots remained unchanged; all rules skip_hw.
+
+Process-crash extension: **65 additional checks passed**, with **7 real SIGKILL
+cuts** of the complete Python adapter. These cover durable CREATE intent,
+completed CREATE, uncheckpointed CREATE receipt, completed DELETE, conflicts
+on either WAN, and a matching token with a different rule action. Fresh workers
+restore from disk and reconcile exact readback under the same inherited fence.
+No blind add/delete replay occurred; conflicting rules and journals survived.
+This does not establish power-loss durability or crashes during kernel syscalls.

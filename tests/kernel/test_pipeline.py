@@ -173,6 +173,8 @@ with tempfile.TemporaryDirectory() as directory:
         for a in rpc('step',1090,fresh=False,flows=[]):
             write(a);receipt(a,1090,'absent')
         check(not mapping and not outbox)
+        crash=subprocess.run([sys.executable,str(root/'tests/kernel/test_crash.py'),helper,lua,*json_module],capture_output=True,text=True,check=True,timeout=30)
+        print(crash.stdout,end='')
         check(filters('labwan0',1999)==decoy,'unrelated rule changed')
         check(command('tc','-j','qdisc','show')==before,'static CAKE root changed')
         print(json.dumps({'passed':True,'checks':checks,'realKernel':True,'wanDevices':2,'exactBudgetRates':True,'durablePendingRetirement':True,'partialWriteTimeout':True,'generationSafeReceipts':True,'hardwareOffload':False}))

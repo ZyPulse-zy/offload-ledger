@@ -19,6 +19,21 @@ before slot reuse, stale-generation receipts, source loss, a command timeout
 after a real partial kernel write, preserved lifetime recovery history, and an
 unrelated rule which must remain unchanged. No packets are generated.
 
+The pipeline also runs `test_crash.py`. It SIGKILLs the **complete Python
+adapter process**, not just its Lua policy subprocess, at seven barriers:
+after durable intent but before a write, after actual CREATE, after the CREATE
+receipt but before its checkpoint, after actual DELETE, and before recovery
+against three conflicting-rule cases. The fence confirms descendant cleanup
+before another transaction starts. A fresh worker restores only the disk
+journal, reads actual rules under the same writer fence, and either confirms
+the exact effect or executes the missing write. It never blindly replays an
+add/delete. Conflicts on either device, and a matching token with a different
+rule action, retain both the pending journal and the existing kernel rule.
+
+These are process-crash tests, not power-loss/storage durability or controller
+crashes during an in-flight kernel syscall. The test adapter owns one private
+slot, starts with a known empty pool, and has no arbitrary hardware discovery.
+
 With built native component paths, Lua 5.1 and lua-cjson:
 
 ```sh

@@ -133,3 +133,8 @@ A [real-kernel pipeline test](tests/kernel/README.md) composes this module with
 pinned cake-snapshot and fenced-run builds. It validates two-WAN budget input,
 actual flower-rule readback and durable outbox recovery inside a private network
 namespace. These are software rules with skip_hw, not an NSS backend.
+
+The isolated kernel pipeline also exercises complete adapter SIGKILL recovery
+at seven durable-state/write boundaries, with exact rule readback under the
+writer fence and conservative conflict handling. See
+[the test protocol and limits](tests/kernel/README.md).
