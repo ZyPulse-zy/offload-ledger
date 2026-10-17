@@ -1,0 +1,40 @@
+name: Validate complete adapter crash recovery
+on:
+  push:
+    branches: [bootstrap/crash-validation]
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: ledger
+      - name: Verify exact source commit
+        working-directory: ledger
+        run: |
+          base64 -d .bootstrap/crash.bundle.b64 > /tmp/crash.bundle
+          echo '9cc576f375585857254fff685577c72375cdc5be1774165bc3ad190ada7ff955  /tmp/crash.bundle' | sha256sum -c -
+          git fetch /tmp/crash.bundle HEAD:refs/remotes/import/candidate
+          test "$(git rev-parse refs/remotes/import/candidate)" = c1714f85b0d875df5ea5479abbad3bbb4e7d8ca6
+          git checkout --detach refs/remotes/import/candidate
+      - uses: actions/checkout@v4
+        with:
+          repository: ZyPulse-zy/fenced-run
+          ref: 8cea5cd1a05898cd8131b9633af296385b4323fb
+          path: fenced
+      - uses: actions/checkout@v4
+        with:
+          repository: ZyPulse-zy/cake-snapshot
+          ref: a2bdad1296f217542b99aa12fa5e4524e0c051ed
+          path: cake
+      - run: sudo apt-get update -qq && sudo apt-get install -y lua5.1 lua-cjson iproute2
+      - run: make -C fenced && make -C cake
+      - run: sudo modprobe dummy && sudo modprobe sch_cake && sudo modprobe cls_flower && sudo modprobe act_gact
+      - name: Real kernel pipeline and complete adapter SIGKILL
+        run: sudo env OFFLOAD_LAB_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 ledger/tests/kernel/test_pipeline.py "$PWD/fenced/fenced-run" "$PWD/cake/build/cake-snapshot" /usr/bin/lua5.1
+      - name: Upload exact tested commit without moving main
+        working-directory: ledger
+        run: git push --force-with-lease=refs/heads/validated/crash: origin HEAD:refs/heads/validated/crash
