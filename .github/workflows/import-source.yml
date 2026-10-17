@@ -12,12 +12,12 @@ jobs:
       - name: Verify source bundle and identity
         run: |
           base64 -d .bootstrap/source.bundle.b64 > /tmp/source.bundle
-          echo '2bcce96af9c439732674c316b9c49412a20166b42c66a41146f17c3eb1637987  /tmp/source.bundle' | sha256sum -c -
+          echo '900d8b9d7a588294bfe0f75640705970f734a9890c65b332004a1fa82b1059ed  /tmp/source.bundle' | sha256sum -c -
           git fetch /tmp/source.bundle main:refs/remotes/import/main
-          test "$(git rev-parse refs/remotes/import/main)" = 4112882d1feb86e05ae26c9dc7ebf931bd36434b
+          test "$(git rev-parse refs/remotes/import/main)" = d6fa6665e5b5bf21743da42690a71b4f1a4ec790
           git checkout --detach refs/remotes/import/main
       - run: sudo apt-get update -qq && sudo apt-get install -y lua5.1 lua-cjson
       - run: make LUA=lua5.1 test test-json example
       - name: Transfer verified source objects
         continue-on-error: true
-        run: git push --force-with-lease=refs/heads/main:e2d26feec695c7100483c141097496e7aa6e79f8 origin HEAD:refs/heads/main
+        run: git push --force-with-lease=refs/heads/main:4112882d1feb86e05ae26c9dc7ebf931bd36434b origin HEAD:refs/heads/main
