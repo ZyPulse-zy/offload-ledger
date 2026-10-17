@@ -37,4 +37,5 @@ jobs:
         run: sudo env OFFLOAD_LAB_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 ledger/tests/kernel/test_pipeline.py "$PWD/fenced/fenced-run" "$PWD/cake/build/cake-snapshot" /usr/bin/lua5.1
       - name: Upload exact tested commit without moving main
         working-directory: ledger
-        run: git push --force-with-lease=refs/heads/validated/crash: origin HEAD:refs/heads/validated/crash
+        run: |
+          git push --force-with-lease=refs/heads/validated/crash: origin HEAD:refs/heads/validated/crash
