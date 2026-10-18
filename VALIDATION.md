@@ -38,3 +38,23 @@ on either WAN, and a matching token with a different rule action. Fresh workers
 restore from disk and reconcile exact readback under the same inherited fence.
 No blind add/delete replay occurred; conflicting rules and journals survived.
 This does not establish power-loss durability or crashes during kernel syscalls.
+
+## Installed OpenWrt package validation (2026-10-18)
+
+The independent ipq60xx SDK built real Lua 5.1.5-r11, liblua and
+offload-ledger 0.1.0-r1 APKs using GCC 14.4.0/musl. Lua recipe and all patches
+were taken from official OpenWrt commit
+814759483bbcfecd7b2741838e897693b07433f4; the Lua 5.1.5 source archive SHA-256
+is 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333.
+After extracting those packages into a fresh user/mount/network namespace and
+chroot, actual qemu-aarch64 execution reproduced the old versioned-path load
+failure and passed default `require` plus all 92,819 policy checks at the fixed
+path. No LUA_PATH/LUA_CPATH override was used. Generic `LUA_DIR` installation
+also matched the packaged source byte for byte. The public CI separately pins
+the official OpenWrt 25.12.0 GCC 14.3.0 SDK and records its own result.
+
+Initial partial recipe downloads failed during network timeouts; an incomplete
+recipe build failed on a missing readline header. These were retained as
+failures, and the final build started clean after all 24 official recipe files
+were available and the Lua archive checksum was verified. No host or router
+package installation, firmware boot or NSS hardware test took place.

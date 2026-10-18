@@ -112,6 +112,37 @@ Candidate selection is deterministic. Work is bounded by configured capacities;
 worst-case candidate/victim scanning is O(records × slots), so choose router-sized
 limits and budget controller CPU time. This library makes no hard timing claim.
 
+## Installation
+
+For a conventional Lua installation, select the interpreter's module directory:
+
+```sh
+make install PREFIX=/usr LUA_VERSION=5.4
+# Or select an exact distribution-specific path:
+make install DESTDIR=/path/to/staging LUA_DIR=/usr/share/lua
+```
+
+`LUA_DIR` defaults to `$(PREFIX)/share/lua/$(LUA_VERSION)`; `DESTDIR` is only
+the staging prefix. Check `lua -e 'print(package.path)'` for your interpreter.
+OpenWrt uses **/usr/share/lua**, without a version suffix, as defined by its
+[Lua path patch](https://github.com/openwrt/openwrt/blob/814759483bbcfecd7b2741838e897693b07433f4/package/utils/lua/patches/200-lua-path.patch).
+
+To build the package, use a **disposable** matching OpenWrt SDK:
+
+```sh
+make openwrt-package
+cp -a build/openwrt/offload-ledger /path/to/disposable-sdk/package/
+make -C /path/to/disposable-sdk defconfig
+make -C /path/to/disposable-sdk package/offload-ledger/compile V=s
+```
+
+The SDK needs its normal Lua package recipe/dependency. The module package is
+architecture independent, depends on `lua`, and installs only the module under
+`/usr/share/lua`. It adds no service, configuration or network operations.
+The [installation regression](tests/openwrt/README.md) exercises actual built
+Lua/liblua/module APKs through the default loader in an isolated ARM/musl
+chroot, including the complete policy suite.
+
 ## Tests and runnable simulation
 
 ```sh

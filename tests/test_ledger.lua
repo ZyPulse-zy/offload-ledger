@@ -1,4 +1,6 @@
-local module=assert(arg[1]); local M=dofile(module); local checks=0
+local module=assert(arg[1]); local M
+if module=='--installed' then M=require('offload_ledger') else M=dofile(module) end
+local checks=0
 local function check(v, why) assert(v,why);checks=checks+1 end
 local function cfg(slots,records)
  return {epoch='boot-and-owner-instance',slots=slots or 2,records=records or 8,

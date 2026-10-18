@@ -1,2 +1,3 @@
 *.luac
 build/
+__pycache__/
