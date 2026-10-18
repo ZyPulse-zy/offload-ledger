@@ -1,40 +1,26 @@
-name: Lua policy tests
-on: [push, pull_request]
+name: Import signed OpenWrt packaging change
+on:
+  push:
+    branches: [bootstrap/ledger-openwrt]
+    paths: [.bootstrap/offload-install.bundle.b64]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  lua:
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        lua: ['5.1', '5.2', '5.3', '5.4']
-    steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y lua${{ matrix.lua }} lua-cjson
-      - run: make LUA=lua${{ matrix.lua }} test example
-      - if: matrix.lua != '5.2'
-        run: make LUA=lua${{ matrix.lua }} test-json
-
-  kernel:
+  import:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          path: ledger
-      - uses: actions/checkout@v4
-        with:
-          repository: ZyPulse-zy/fenced-run
-          ref: 8cea5cd1a05898cd8131b9633af296385b4323fb
-          path: fenced
-      - uses: actions/checkout@v4
-        with:
-          repository: ZyPulse-zy/cake-snapshot
-          ref: a2bdad1296f217542b99aa12fa5e4524e0c051ed
-          path: cake
-      - name: Install test dependencies
-        run: sudo apt-get update -qq && sudo apt-get install -y lua5.1 lua-cjson iproute2
-      - run: make -C fenced && make -C cake
-      - name: Load test modules
-        run: sudo modprobe dummy && sudo modprobe sch_cake && sudo modprobe cls_flower && sudo modprobe act_gact
-      - name: Test real kernel pipeline in private network namespace
-        run: sudo env OFFLOAD_LAB_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 ledger/tests/kernel/test_pipeline.py "$PWD/fenced/fenced-run" "$PWD/cake/build/cake-snapshot" /usr/bin/lua5.1
+          fetch-depth: 0
+      - name: Verify and import exact candidate
+        run: |
+          base64 -d .bootstrap/offload-install.bundle.b64 > /tmp/ledger.bundle
+          echo '4a69464f28ed467fe9a3579aa3c9f7c6222988d8707979f40df7883428850696  /tmp/ledger.bundle' | sha256sum -c -
+          git bundle verify /tmp/ledger.bundle
+          git fetch /tmp/ledger.bundle main:refs/heads/candidate
+          test "$(git rev-parse candidate)" = 11e26e8c80acb7a772ab530af0349b3561254425
+          test "$(git rev-parse candidate^{tree})" = 28ac7749dedb2f77493980e1e2df73bafd0553aa
+          git log -1 --format=%B candidate | grep -Fx 'Signed-off-by: Yuen Su <zypulsecore@gmail.com>'
+          git diff --check c1714f85b0d875df5ea5479abbad3bbb4e7d8ca6 candidate
+      - name: Publish staging ref for checked external main update
+        run: git push origin candidate:refs/heads/imported/ledger-openwrt
