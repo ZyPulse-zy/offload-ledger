@@ -15,6 +15,43 @@ jobs:
       - if: matrix.lua != '5.2'
         run: make LUA=lua${{ matrix.lua }} test-json
 
+  openwrt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ledger
+      - uses: actions/checkout@v4
+        with:
+          repository: openwrt/openwrt
+          ref: 814759483bbcfecd7b2741838e897693b07433f4
+          sparse-checkout: package/utils/lua
+          path: openwrt-source
+      - name: Install build and emulation tools
+        run: sudo apt-get update -qq && sudo apt-get install -y build-essential gawk libncurses-dev zlib1g-dev file unzip zstd qemu-user-static
+      - name: Download pinned OpenWrt 25.12.0 AArch64/musl SDK
+        run: |
+          curl --fail --location --retry 3 https://downloads.openwrt.org/releases/25.12.0/targets/qualcommax/ipq60xx/openwrt-sdk-25.12.0-qualcommax-ipq60xx_gcc-14.3.0_musl.Linux-x86_64.tar.zst -o sdk.tar.zst
+          echo '068b9f70a19fa95383be5778cdea5aeeef4ede61022de9e596f14bd4f30a4225  sdk.tar.zst' | sha256sum -c -
+          mkdir sdk
+          tar --zstd -xf sdk.tar.zst --strip-components=1 -C sdk
+      - name: Build actual OpenWrt Lua and module APKs
+        run: |
+          make -C ledger openwrt-package
+          cp -a ledger/build/openwrt/offload-ledger sdk/package/
+          mkdir -p sdk/package/utils
+          cp -a openwrt-source/package/utils/lua sdk/package/utils/
+          make -C sdk defconfig
+          make -C sdk package/offload-ledger/compile V=s -j2
+      - name: Test default require and complete policy suite in extracted-package chroot
+        run: sudo python3 ledger/tests/openwrt/test-package.py --sdk sdk --qemu /usr/bin/qemu-aarch64-static --report openwrt-install.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-install-evidence
+          path: |
+            openwrt-install.json
+            sdk/bin/packages/*/base/offload-ledger-*.apk
+
   kernel:
     runs-on: ubuntu-24.04
     steps:
