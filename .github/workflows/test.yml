@@ -15,11 +15,11 @@ jobs:
       - name: Verify and import exact candidate
         run: |
           base64 -d .bootstrap/offload-install.bundle.b64 > /tmp/ledger.bundle
-          echo '4a69464f28ed467fe9a3579aa3c9f7c6222988d8707979f40df7883428850696  /tmp/ledger.bundle' | sha256sum -c -
+          echo 'f70904624b91ca199f38445fd639f0c8ce389f67989226677a197df5a178b718  /tmp/ledger.bundle' | sha256sum -c -
           git bundle verify /tmp/ledger.bundle
           git fetch /tmp/ledger.bundle HEAD:refs/heads/candidate
-          test "$(git rev-parse candidate)" = 11e26e8c80acb7a772ab530af0349b3561254425
-          test "$(git rev-parse candidate^{tree})" = 28ac7749dedb2f77493980e1e2df73bafd0553aa
+          test "$(git rev-parse candidate)" = c9cd56193e0a7cf5e402ee2311a651d43f8acb85
+          test "$(git rev-parse candidate^{tree})" = 2ef823878c5a8906b849aef3a676ec4f7f9db89c
           git log -1 --format=%B candidate | grep -Fx 'Signed-off-by: Yuen Su <zypulsecore@gmail.com>'
           git diff --check c1714f85b0d875df5ea5479abbad3bbb4e7d8ca6 candidate
       - name: Publish staging ref for checked external main update
